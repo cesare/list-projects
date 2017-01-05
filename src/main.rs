@@ -1,5 +1,5 @@
 use std::env;
-use std::fs;
+use std::fs::{self, ReadDir};
 use std::path::{Path, PathBuf};
 
 fn find_root_directory_by_env() -> Option<PathBuf> {
@@ -29,32 +29,30 @@ fn find_root_directory() -> Result<PathBuf, String> {
     }
 }
 
+fn select_directories(dir: ReadDir) -> Vec<PathBuf> {
+    dir.filter_map(|entry| entry.map(|e| e.path()).ok())
+        .filter(|path| path.is_dir())
+        .collect()
+}
+
 fn filter_directories(root: &Path, to_depth: u32) -> Vec<PathBuf> {
+    if to_depth == 0 {
+        return vec![];
+    }
+
+    let paths: Vec<PathBuf> = match fs::read_dir(root) {
+        Ok(current_dir) => select_directories(current_dir),
+        Err(_) => vec![],
+    };
+
     let mut dirs: Vec<PathBuf> = vec![];
 
-    if to_depth == 0 {
-        return dirs;
+    for path in paths {
+        let subdirs = filter_directories(&path, to_depth - 1);
+        dirs.push(path);
+        dirs.extend_from_slice(&subdirs);
     }
-
-    match fs::read_dir(root) {
-        Ok(current_dir) => {
-            for entry in current_dir {
-                match entry {
-                    Ok(entry) => {
-                        let path = entry.path();
-                        if path.is_dir() {
-                            let subdirs = filter_directories(&path, to_depth - 1);
-                            dirs.push(path);
-                            dirs.extend_from_slice(&subdirs);
-                        }
-                    }
-                    Err(_) => (),
-                }
-            }
-            dirs
-        }
-        Err(_) => dirs,
-    }
+    dirs
 }
 
 fn list_directories(path: &Path) {
