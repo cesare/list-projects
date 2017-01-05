@@ -29,9 +29,25 @@ fn find_root_directory() -> Result<PathBuf, String> {
     }
 }
 
+fn starts_with_dot(path: &PathBuf) -> bool {
+    match path.file_name() {
+        Some(osstr) => {
+            match osstr.to_str() {
+                Some(name) => name.starts_with("."),
+                None => false,
+            }
+        }
+        None => false,
+    }
+}
+
+fn path_should_appear(path: &PathBuf) -> bool {
+    path.is_dir() && !starts_with_dot(path)
+}
+
 fn select_directories(dir: ReadDir) -> Vec<PathBuf> {
     dir.filter_map(|entry| entry.map(|e| e.path()).ok())
-        .filter(|path| path.is_dir())
+        .filter(|path| path_should_appear(&path))
         .collect()
 }
 
