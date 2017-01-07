@@ -5,3 +5,4 @@ authors = ["SAWADA Tadashi <cesare@mayverse.jp>"]
 
 [dependencies]
 docopt = "0.7.0"
+rustc-serialize = "0.3"
