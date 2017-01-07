@@ -32,18 +32,11 @@ fn find_root_directory_by_arg(args: &Args) -> Option<PathBuf> {
 }
 
 fn find_root_directory_by_env() -> Option<PathBuf> {
-    match env::var("LIST_PROJECTS_DIR") {
-        Ok(value) => Some(PathBuf::from(value)),
-        Err(_) => None,
-    }
+    env::var("LIST_PROJECTS_DIR").ok().map(|value| PathBuf::from(value))
 }
 
 fn find_root_directory_by_default() -> Option<PathBuf> {
-    let home = env::home_dir();
-    match home {
-        Some(path) => Some(path.join("projects")),
-        None => None,
-    }
+    env::home_dir().map(|path| path.join("projects"))
 }
 
 fn find_root_directory(args: &Args) -> Result<PathBuf, String> {
@@ -54,15 +47,9 @@ fn find_root_directory(args: &Args) -> Result<PathBuf, String> {
 }
 
 fn starts_with_dot(path: &PathBuf) -> bool {
-    match path.file_name() {
-        Some(osstr) => {
-            match osstr.to_str() {
-                Some(name) => name.starts_with("."),
-                None => false,
-            }
-        }
-        None => false,
-    }
+    path.file_name()
+        .and_then(|osstr| osstr.to_str())
+        .map_or(false, |name| name.starts_with("."))
 }
 
 fn path_should_appear(path: &PathBuf) -> bool {
